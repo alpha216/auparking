@@ -33,20 +33,6 @@
             <h1 class="text-3xl font-bold text-blue-900">Auburn University Parking</h1>
             <p class="text-gray-500 mt-2">Live availability from select parking decks.</p>
         </header>
-
-        <!-- Legend -->
-        <div class="flex justify-center items-center space-x-6 my-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <span class="font-semibold text-gray-700">Legend:</span>
-            <div class="flex items-center space-x-2">
-                <span class="font-mono font-bold text-lg text-red-600">1</span>
-                <span class="text-gray-600">= Occupied</span>
-            </div>
-            <div class="flex items-center space-x-2">
-                <span class="font-mono font-bold text-lg text-green-600">0</span>
-                <span class="text-gray-600">= Available</span>
-            </div>
-        </div>
-
         <div class="space-y-6">
             <!-- Stadium Deck Card -->
             <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
@@ -101,9 +87,22 @@
                 const electricStatuses = stadiumData
                     .filter(item => item.zone === "electric")
                     .map(item => item.status)
-                    .join('\n'); // Join with newlines to mimic print() behavior
+                    // .join('\n'); // Join with newlines to mimic print() behavior
 
-                stadiumOutput.textContent = electricStatuses || 'No electric vehicle spots found.';
+                let occAndAva = [0, 0];
+
+                for (const status of electricStatuses) {
+                    if(status == 1) { occAndAva[0]++; }
+                    if(status == 0) { occAndAva[1]++; }
+                }
+
+                stadiumOutput.textContent = `${occAndAva[0]} occupied, ${occAndAva[1]} available` || 'No electric vehicle spots found.';
+
+                // If no spots are available, change the background to red.
+                if (occAndAva[1] === 0) {
+                    stadiumOutput.classList.remove('text-blue-600', 'bg-blue-50');
+                    stadiumOutput.classList.add('text-red-800', 'bg-red-100');
+                }
 
             } catch (error) {
                 console.error("Error fetching Stadium Deck data:", error);
@@ -133,9 +132,22 @@
 
 
                 // Split the string into an array of characters and join with newlines
-                const formattedAthleticsData = slicedTxt.split('').join('\n');
+                const formattedAthleticsData = slicedTxt.split('')
 
-                athleticsOutput.textContent = formattedAthleticsData || 'Data slice is empty.';
+                let occAndAva = [0, 0];
+
+                for (const status of formattedAthleticsData) {
+                    if(status == 1) { occAndAva[0]++; }
+                    if(status == 0) { occAndAva[1]++; }
+                }
+
+                athleticsOutput.textContent = `${occAndAva[0]} occupied, ${occAndAva[1]} available` || 'Data slice is empty.';
+
+                // If no spots are available, change the background to red.
+                if (occAndAva[1] === 0) {
+                    athleticsOutput.classList.remove('text-green-600', 'bg-green-50');
+                    athleticsOutput.classList.add('text-red-800', 'bg-red-100');
+                }
 
             } catch (error) {
                 console.error("Error fetching Athletics Deck data:", error);
@@ -147,4 +159,5 @@
 
 </body>
 </html>
+
 
