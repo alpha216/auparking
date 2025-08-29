@@ -61,103 +61,102 @@
 
     <script>
         // This function will run once the HTML content is fully loaded.
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const stadiumOutput = document.getElementById('stadium-data');
             const athleticsOutput = document.getElementById('athletics-data');
             const lastUpdatedElem = document.getElementById('last-updated');
-
-            // Set the current time when the data is fetched.
-            lastUpdatedElem.textContent = new Date().toLocaleTimeString();
 
             // The URLs from the Python script
             const stadiumUrl = "https://api6.fopark-api.com/lot/occupancy?client_name=auburn&name=au-stdm-grg-lvl1";
             const athleticsUrl = "https://api6.fopark-api.com/lot/occupancy?client_name=auburn&name=au-athletic-grg-lvl1";
 
-            try {
-                // --- Fetch and process data for the Stadium Deck ---
-                const stadiumResponse = await fetch(stadiumUrl);
-                // Check if the network request was successful
-                if (!stadiumResponse.ok) {
-                    throw new Error(`Network response was not ok for Stadium Deck: ${stadiumResponse.statusText}`);
-                }
-                const stadiumJson = await stadiumResponse.json();
-                const stadiumData = stadiumJson.lot_status;
+            const fetchParkingData = async () => {
+                console.log("Fetching latest parking data...");
+                // Set the current time when the data is fetched.
+                lastUpdatedElem.textContent = new Date().toLocaleTimeString();
 
-                // Filter for "electric" zones and get their status, similar to the Python loop.
-                const electricStatuses = stadiumData
-                    .filter(item => item.zone === "electric")
-                    .map(item => item.status)
-                    // .join('\n'); // Join with newlines to mimic print() behavior
+                try {
+                    // --- Fetch and process data for the Stadium Deck ---
+                    const stadiumResponse = await fetch(stadiumUrl);
+                    if (!stadiumResponse.ok) {
+                        throw new Error(`Network response was not ok for Stadium Deck: ${stadiumResponse.statusText}`);
+                    }
+                    const stadiumJson = await stadiumResponse.json();
+                    const stadiumData = stadiumJson.lot_status;
 
-                let occAndAva = [0, 0];
+                    const electricStatuses = stadiumData
+                        .filter(item => item.zone === "electric")
+                        .map(item => item.status);
 
-                for (const status of electricStatuses) {
-                    if(status == 1) { occAndAva[0]++; }
-                    if(status == 0) { occAndAva[1]++; }
-                }
+                    let occAndAva = [0, 0];
+                    for (const status of electricStatuses) {
+                        if(status == 1) { occAndAva[0]++; }
+                        if(status == 0) { occAndAva[1]++; }
+                    }
 
-                stadiumOutput.textContent = `${occAndAva[0]} occupied, ${occAndAva[1]} available` || 'No electric vehicle spots found.';
+                    stadiumOutput.textContent = `${occAndAva[0]} occupied, ${occAndAva[1]} available` || 'No electric vehicle spots found.';
 
-                // If no spots are available, change the background to red.
-                if (occAndAva[1] === 0) {
-                    stadiumOutput.classList.remove('text-blue-600', 'bg-blue-50');
-                    stadiumOutput.classList.add('text-red-800', 'bg-red-100');
-                }
-
-            } catch (error) {
-                console.error("Error fetching Stadium Deck data:", error);
-                stadiumOutput.textContent = 'Failed to load data.';
-                stadiumOutput.classList.add('text-red-500'); // Add error styling
-            }
-
-
-            try {
-                // --- Fetch and process data for the Athletics Deck ---
-                const athleticsResponse = await fetch(athleticsUrl);
-                 // Check if the network request was successful
-                if (!athleticsResponse.ok) {
-                    throw new Error(`Network response was not ok for Athletics Deck: ${athleticsResponse.statusText}`);
-                }
-                const athleticsJson = await athleticsResponse.json();
-                const athleticsData = athleticsJson.lot_status;
-
-                // Concatenate all status values into a single string, preserving the original order.
-                let txt = '';
-                for (const item of athleticsData) {
-                    txt += item.status;
+                    // Reset styles before applying new ones
+                    stadiumOutput.classList.remove('text-red-800', 'bg-red-100');
+                    stadiumOutput.classList.add('text-blue-600', 'bg-blue-50');
+                    
+                    if (occAndAva[1] === 0) {
+                        stadiumOutput.classList.remove('text-blue-600', 'bg-blue-50');
+                        stadiumOutput.classList.add('text-red-800', 'bg-red-100');
+                    }
+                } catch (error) {
+                    console.error("Error fetching Stadium Deck data:", error);
+                    stadiumOutput.textContent = 'Failed to load data.';
+                    stadiumOutput.classList.add('text-red-500');
                 }
 
-                // Get the substring from index 121 to 125
-                const slicedTxt = txt.substring(121, 125);
+                try {
+                    // --- Fetch and process data for the Athletics Deck ---
+                    const athleticsResponse = await fetch(athleticsUrl);
+                    if (!athleticsResponse.ok) {
+                        throw new Error(`Network response was not ok for Athletics Deck: ${athleticsResponse.statusText}`);
+                    }
+                    const athleticsJson = await athleticsResponse.json();
+                    const athleticsData = athleticsJson.lot_status;
 
+                    let txt = '';
+                    for (const item of athleticsData) {
+                        txt += item.status;
+                    }
+                    const slicedTxt = txt.substring(121, 125);
+                    const formattedAthleticsData = slicedTxt.split('');
 
-                // Split the string into an array of characters and join with newlines
-                const formattedAthleticsData = slicedTxt.split('')
+                    let occAndAva = [0, 0];
+                    for (const status of formattedAthleticsData) {
+                        if(status == 1) { occAndAva[0]++; }
+                        if(status == 0) { occAndAva[1]++; }
+                    }
 
-                let occAndAva = [0, 0];
+                    athleticsOutput.textContent = `${occAndAva[0]} occupied, ${occAndAva[1]} available` || 'Data slice is empty.';
 
-                for (const status of formattedAthleticsData) {
-                    if(status == 1) { occAndAva[0]++; }
-                    if(status == 0) { occAndAva[1]++; }
+                    // Reset styles before applying new ones
+                    athleticsOutput.classList.remove('text-red-800', 'bg-red-100');
+                    athleticsOutput.classList.add('text-green-600', 'bg-green-50');
+
+                    if (occAndAva[1] === 0) {
+                        athleticsOutput.classList.remove('text-green-600', 'bg-green-50');
+                        athleticsOutput.classList.add('text-red-800', 'bg-red-100');
+                    }
+                } catch (error) {
+                    console.error("Error fetching Athletics Deck data:", error);
+                    athleticsOutput.textContent = 'Failed to load data.';
+                    athleticsOutput.classList.add('text-red-500');
                 }
+            };
 
-                athleticsOutput.textContent = `${occAndAva[0]} occupied, ${occAndAva[1]} available` || 'Data slice is empty.';
+            // Fetch data immediately on page load
+            fetchParkingData();
 
-                // If no spots are available, change the background to red.
-                if (occAndAva[1] === 0) {
-                    athleticsOutput.classList.remove('text-green-600', 'bg-green-50');
-                    athleticsOutput.classList.add('text-red-800', 'bg-red-100');
-                }
-
-            } catch (error) {
-                console.error("Error fetching Athletics Deck data:", error);
-                athleticsOutput.textContent = 'Failed to load data.';
-                athleticsOutput.classList.add('text-red-500'); // Add error styling
-            }
+            // Then, fetch data every 30 seconds
+            setInterval(fetchParkingData, 30000);
         });
     </script>
 
 </body>
 </html>
-
 
