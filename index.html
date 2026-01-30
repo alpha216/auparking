@@ -51,6 +51,15 @@
                     <div class="loading-dots text-gray-500 text-2xl"><span>.</span><span>.</span><span>.</span></div>
                 </div>
             </div>
+
+            <!-- Haley Deck Card -->
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Haley Deck</h2>
+                <div id="haley-data" class="text-lg font-mono text-purple-600 bg-purple-50 p-4 rounded-md whitespace-pre-wrap min-h-[5rem] flex items-center justify-center">
+                    <!-- Loading indicator for haley -->
+                    <div class="loading-dots text-gray-500 text-2xl"><span>.</span><span>.</span><span>.</span></div>
+                </div>
+            </div>
         </div>
         
         <footer class="text-center mt-8 text-sm text-gray-400">
@@ -63,11 +72,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             const stadiumOutput = document.getElementById('stadium-data');
             const athleticsOutput = document.getElementById('athletics-data');
+            const haleyOutput = document.getElementById('haley-data');
             const lastUpdatedElem = document.getElementById('last-updated');
 
             // The URLs from the Python script
             const stadiumUrl = "https://api6.fopark-api.com/lot/occupancy?client_name=auburn&name=au-stdm-grg-lvl1";
             const athleticsUrl = "https://api6.fopark-api.com/lot/occupancy?client_name=auburn&name=au-athletic-grg-lvl1";
+            const haleyUrl = "https://api6.fopark-api.com/lot/occupancy?client_name=auburn&name=au-west2";
 
             const fetchParkingData = async () => {
                 console.log("Fetching latest parking data...");
@@ -153,6 +164,47 @@
                     console.error("Error fetching Athletics Deck data:", error);
                     athleticsOutput.textContent = 'Failed to load data.';
                     athleticsOutput.classList.add('text-red-500');
+                }
+
+                try {
+                    // --- Fetch and process data for the Haley Deck ---
+                    const haleyResponse = await fetch(haleyUrl);
+                    if (!haleyResponse.ok) {
+                        throw new Error(`Network response was not ok for Haley Deck: ${haleyResponse.statusText}`);
+                    }
+                    const haleyJson = await haleyResponse.json();
+                    const haleyData = haleyJson.lot_status;
+
+                    // EV charging spot coordinates (2 spots)
+                    const haleyEvSpotCoords = [
+                        "32.60308136711112,-85.50106216197128",
+                        "32.60305318310657,-85.50106213252354"
+                    ];
+
+                    const haleyElectricStatuses = haleyData
+                        .filter(item => haleyEvSpotCoords.includes(item.coords))
+                        .map(item => item.status);
+
+                    let haleyOccAndAva = [0, 0];
+                    for (const status of haleyElectricStatuses) {
+                        if(status == 1) { haleyOccAndAva[0]++; }
+                        if(status == 0) { haleyOccAndAva[1]++; }
+                    }
+
+                    haleyOutput.textContent = `${haleyOccAndAva[0]} occupied, ${haleyOccAndAva[1]} available` || 'No electric vehicle spots found.';
+
+                    // Reset styles before applying new ones
+                    haleyOutput.classList.remove('text-red-800', 'bg-red-100');
+                    haleyOutput.classList.add('text-purple-600', 'bg-purple-50');
+                    
+                    if (haleyOccAndAva[1] === 0) {
+                        haleyOutput.classList.remove('text-purple-600', 'bg-purple-50');
+                        haleyOutput.classList.add('text-red-800', 'bg-red-100');
+                    }
+                } catch (error) {
+                    console.error("Error fetching Haley Deck data:", error);
+                    haleyOutput.textContent = 'Failed to load data.';
+                    haleyOutput.classList.add('text-red-500');
                 }
             };
 
