@@ -83,8 +83,16 @@
                     const stadiumJson = await stadiumResponse.json();
                     const stadiumData = stadiumJson.lot_status;
 
+                    // EV charging spot coordinates (stalls 33, 34, 35, 134)
+                    const evSpotCoords = [
+                        "32.600559201904154,-85.48814522453688",  // Stall 33
+                        "32.60053102304166,-85.48814664785039",   // Stall 34
+                        "32.600503882656454,-85.48814530674588",  // Stall 35
+                        "32.600475642272514,-85.48814396564137"   // Stall 134
+                    ];
+
                     const electricStatuses = stadiumData
-                        .filter(item => item.zone === "electric")
+                        .filter(item => evSpotCoords.includes(item.coords))
                         .map(item => item.status);
 
                     let occAndAva = [0, 0];
